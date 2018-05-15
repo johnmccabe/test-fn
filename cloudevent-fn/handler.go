@@ -92,12 +92,12 @@ func sendMessage(imgURL, eventType, cloudEvent string) {
 	attachment := slack.Attachment{
 		ImageURL: imgURL,
 		Color:    "#36a64f",
-		Pretext:  fmt.Sprintf("Received Cloudevent Type: %s", eventType),
+		Pretext:  fmt.Sprintf("Received CloudEvent Type: %s", eventType),
 		Fields: []slack.AttachmentField{
 			slack.AttachmentField{
-				Title: "Raw Message",
+				Title: "Raw CloudEvent",
 				Value: fmt.Sprintf("```%s```", cloudEvent),
-				Short: true,
+				Short: false,
 			},
 		},
 	}
