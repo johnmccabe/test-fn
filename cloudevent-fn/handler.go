@@ -77,7 +77,7 @@ func Handle(req []byte) string {
 		if err := json.Unmarshal(c.Data, &d); err != nil {
 			log.Fatal("Unable to unmarshal MicrosoftStorageBlobCreated object")
 		}
-		sendMessage(d.Url)
+		sendMessage(d.Url, MicrosoftStorageBlobCreatedType, string(req))
 		return OK
 	default:
 		log.Fatalf("Unsupported eventType received: %s", c.EventType)
@@ -86,14 +86,23 @@ func Handle(req []byte) string {
 	return OK
 }
 
-func sendMessage(imgURL string) {
+func sendMessage(imgURL, eventType, cloudEvent string) {
 	api := slack.New(getSlackToken())
 	params := slack.PostMessageParameters{}
 	attachment := slack.Attachment{
 		ImageURL: imgURL,
+		Color:    "#36a64f",
+		Pretext:  fmt.Sprintf("Received Cloudevent Type: %s", eventType),
+		Fields: []slack.AttachmentField{
+			slack.AttachmentField{
+				Title: "Raw Message",
+				Value: fmt.Sprintf("```%s```", cloudEvent),
+				Short: false,
+			},
+		},
 	}
 	params.Attachments = []slack.Attachment{attachment}
-	channelID, timestamp, err := api.PostMessage(getSlackRoom(), "CloudEvent received:", params)
+	channelID, timestamp, err := api.PostMessage(getSlackRoom(), "", params)
 	if err != nil {
 		log.Fatalf("%s\n", err)
 	}
