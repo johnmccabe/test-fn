@@ -6,7 +6,7 @@ functions:
   cloudevent-fn:
     lang: go
     handler: ./cloudevent-fn
-    image: cloudevent-fn
+    image: johnmccabe/cloudeventfn
     environment:
       write_debug: true
       slack_token: "johnmccabe-cloudevent-slack-token"
