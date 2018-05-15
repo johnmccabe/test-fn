@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/nlopes/slack"
 )
@@ -128,9 +129,9 @@ func getSlackToken() string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return string(token)
+	return strings.TrimSpace(string(token))
 }
 
 func getSlackRoom() string {
-	return os.Getenv("slack_room")
+	return strings.TrimSpace(os.Getenv("slack_room"))
 }
