@@ -1,0 +1,15 @@
+provider:
+  name: faas
+  gateway: http://127.0.0.1:8080
+
+functions:
+  cloudevent-fn:
+    lang: go
+    handler: ./cloudevent-fn
+    image: cloudevent-fn
+    environment:
+      write_debug: true
+      slack_token: "johnmccabe-cloudevent-slack-token"
+      slack_room: "CAQ63HQ4T"
+    secrets:
+    - cloudevent-slack-token
