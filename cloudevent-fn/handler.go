@@ -97,7 +97,7 @@ func sendMessage(imgURL, eventType, cloudEvent string) {
 			slack.AttachmentField{
 				Title: "Raw Message",
 				Value: fmt.Sprintf("```%s```", cloudEvent),
-				Short: false,
+				Short: true,
 			},
 		},
 	}
