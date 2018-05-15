@@ -2,61 +2,8 @@ package function
 
 import (
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
 	"log"
-	"os"
-	"strings"
-
-	"github.com/nlopes/slack"
 )
-
-type SubscriptionValidationEvent struct {
-	Id              string
-	Topic           string
-	Subject         string
-	Data            SubscriptionValidationData
-	EventType       string
-	EventTime       string
-	MetadataVersion string
-	DataVersion     string
-}
-
-type SubscriptionValidationData struct {
-	ValidationCode string
-	ValidationUrl  string
-}
-
-type SubscriptionValidationResp struct {
-	ValidationResponse string
-}
-
-type CloudEvent struct {
-	EventType          string
-	EventTypeVersion   string
-	CloudEventsVersion string
-	Source             string
-	EventID            string
-	EventTime          string
-	Data               json.RawMessage
-}
-
-type MicrosoftStorageBlobCreated struct {
-	Api                string
-	ClientRequestId    string
-	RequestId          string
-	ETag               string
-	ContentType        string
-	ContentLength      int
-	BlobType           string
-	Url                string
-	Sequencer          string
-	StorageDiagnostics StorageDiagnostics
-}
-
-type StorageDiagnostics struct {
-	BatchId string
-}
 
 const MicrosoftStorageBlobCreatedType = "Microsoft.Storage.BlobCreated"
 const OK = "OK"
@@ -69,7 +16,7 @@ func Handle(req []byte) string {
 	}
 
 	// Handle CloudEvent, logs error and exits if invalid
-	c := cloudEvent(req)
+	c := getCloudEvent(req)
 
 	switch c.EventType {
 	case MicrosoftStorageBlobCreatedType:
@@ -86,34 +33,11 @@ func Handle(req []byte) string {
 	return OK
 }
 
-func sendMessage(imgURL, eventType, cloudEvent string) {
-	api := slack.New(getSlackToken())
-	params := slack.PostMessageParameters{}
-	attachment := slack.Attachment{
-		ImageURL: imgURL,
-		Color:    "#36a64f",
-		Pretext:  fmt.Sprintf("Received CloudEvent Type: %s", eventType),
-		Fields: []slack.AttachmentField{
-			slack.AttachmentField{
-				Title: "Raw CloudEvent",
-				Value: fmt.Sprintf("```%s```", cloudEvent),
-				Short: false,
-			},
-		},
-	}
-	params.Attachments = []slack.Attachment{attachment}
-	channelID, timestamp, err := api.PostMessage(getSlackRoom(), "", params)
-	if err != nil {
-		log.Fatalf("%s\n", err)
-	}
-	fmt.Printf("Message successfully sent to channel %s at %s", channelID, timestamp)
-}
-
 func azureValidationEvent(req []byte) *string {
 	v := []SubscriptionValidationEvent{}
 	if err := json.Unmarshal(req, &v); err == nil {
-		r := SubscriptionValidationResp{}
 		if len(v) > 0 && len(v[0].Data.ValidationCode) > 0 {
+			r := SubscriptionValidationResp{}
 			r.ValidationResponse = v[0].Data.ValidationCode
 			if b, err := json.Marshal(r); err == nil {
 				resp := string(b)
@@ -125,22 +49,10 @@ func azureValidationEvent(req []byte) *string {
 	return nil
 }
 
-func cloudEvent(req []byte) *CloudEvent {
+func getCloudEvent(req []byte) *CloudEvent {
 	c := CloudEvent{}
 	if err := json.Unmarshal(req, &c); err != nil {
 		log.Fatalf("Received an Unsupported Event: %s", string(req))
 	}
 	return &c
-}
-
-func getSlackToken() string {
-	token, err := ioutil.ReadFile("/var/run/secrets/" + os.Getenv("slack_token"))
-	if err != nil {
-		log.Fatal(err)
-	}
-	return strings.TrimSpace(string(token))
-}
-
-func getSlackRoom() string {
-	return strings.TrimSpace(os.Getenv("slack_room"))
 }
