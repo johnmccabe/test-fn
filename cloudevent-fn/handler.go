@@ -6,23 +6,20 @@ import (
 )
 
 const MicrosoftStorageBlobCreatedType = "Microsoft.Storage.BlobCreated"
-const OK = "OK"
 
 // Handle a serverless request
 func Handle(req []byte) string {
-	// Handle Azure Subscription Validation event
 	if resp := azureValidationEvent(req); resp != nil {
 		return *resp
 	}
 
-	// Handle CloudEvent, logs error and exits if invalid
 	c := getCloudEvent(req)
 
 	switch c.EventType {
 	case MicrosoftStorageBlobCreatedType:
 		d := MicrosoftStorageBlobCreated{}
 		if err := json.Unmarshal(c.Data, &d); err != nil {
-			log.Fatal("Unable to unmarshal MicrosoftStorageBlobCreated object")
+			log.Fatalf("Unable to unmarshal object for: %s", MicrosoftStorageBlobCreatedType)
 		}
 		sendMessage(d.Url, MicrosoftStorageBlobCreatedType, string(req))
 		return OK
@@ -33,6 +30,8 @@ func Handle(req []byte) string {
 	return OK
 }
 
+// azureValidationEvent handles a received Azure Subscription Validation
+// event, returning the ValidationCode extracted from the request
 func azureValidationEvent(req []byte) *string {
 	v := []SubscriptionValidationEvent{}
 	if err := json.Unmarshal(req, &v); err == nil {
@@ -49,6 +48,8 @@ func azureValidationEvent(req []byte) *string {
 	return nil
 }
 
+// getCloudEvent returns a pointer to a CloudEvent extracted from the
+// request submitted to the handler
 func getCloudEvent(req []byte) *CloudEvent {
 	c := CloudEvent{}
 	if err := json.Unmarshal(req, &c); err != nil {

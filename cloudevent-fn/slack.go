@@ -10,6 +10,8 @@ import (
 	"github.com/nlopes/slack"
 )
 
+// getSlackToken returns the Slack Bot User OAuth Access Token
+// from the configured secret file
 func getSlackToken() string {
 	token, err := ioutil.ReadFile("/var/run/secrets/" + os.Getenv("slack_token"))
 	if err != nil {
@@ -18,10 +20,13 @@ func getSlackToken() string {
 	return strings.TrimSpace(string(token))
 }
 
+// getSlackRoom returns the Slack room ID stored in the functions
+// environment variables
 func getSlackRoom() string {
 	return strings.TrimSpace(os.Getenv("slack_room"))
 }
 
+// sendMessage to the Slack bot and room configured in stack.yml
 func sendMessage(imgURL, eventType, cloudEvent string) {
 	api := slack.New(getSlackToken())
 	params := slack.PostMessageParameters{}
